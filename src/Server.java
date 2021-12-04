@@ -6,7 +6,7 @@ import java.util.ArrayList;
 /**
  * Chat server that receives and sends text messages to online clients using stream sockets
  *
- * @author Jennifer McCarthy, jemc7787, 930124-0983
+ * @author Jennifer McCarthy
  */
 public class Server {
 
@@ -42,47 +42,53 @@ public class Server {
     }
 
     /**
+     * Sets title of GUI to show host, port number and number of clients online
+     */
+    public void setTitle(){
+        jFrame.setTitle("SERVER ON: " + host + " - PORT: " + port + " - N CLIENTS: " + clientThreads.size());
+    }
+
+    /**
      * Listens for chat client requests and puts accepted new clients into threads and starts them
      */
     public void run() {
         try {
             ServerSocket serverSocket = new ServerSocket(port);
             host = serverSocket.getInetAddress().getLocalHost().getHostName();
-            jFrame.setTitle("SERVER ON: " + host + " - PORT: " + port + " - N CLIENTS: " + clientThreads.size());
+            setTitle();
 
             while (true){
                 Socket socket = serverSocket.accept();
                 ClientThread clientThread = new ClientThread(this, socket);
                 clientThreads.add(clientThread);
-                jFrame.setTitle("SERVER ON: " + host + " - PORT: " + port + " - N CLIENTS: " + clientThreads.size());
+                setTitle();
                 clientThread.start();
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
-     * Gets the list of all online clients
+     * Gets all online client usernames expect the client who sent the request
      *
      * @return string of online clients
      */
-    public String getOnlineClients(String exclude){
+    public String getOnlineClientUsernames(String exclude){
         StringBuilder stringBuilder = new StringBuilder();
         for (ClientThread clientThread : clientThreads) {
             if (!clientThread.getUsername().equals(exclude)) {
-                stringBuilder.append(clientThread.getUsername() + ",");
+                stringBuilder.append(clientThread.getUsername()).append(",");
             }
         }
         return stringBuilder.toString();
     }
 
     /**
-     * Broadcasts an incoming message to all clients
+     * Broadcasts an incoming message to all online clients
      *
-     * @param msg The incoming message from a chat client
+     * @param msg the incoming message from a chat client
      */
     synchronized void broadcast(String msg) {
         for (ClientThread clientThread : clientThreads) {
@@ -97,7 +103,7 @@ public class Server {
      * @param sender the sending client
      * @param receiver the receiver client
      */
-    synchronized void sendPrivate(String msg, ClientThread sender, String receiver){
+    synchronized void sendPrivateMessage(String msg, ClientThread sender, String receiver){
         for (ClientThread clientThread : clientThreads) {
             if (clientThread.getUsername().equals(receiver)){
                 clientThread.sendMessage(msg);
@@ -126,7 +132,7 @@ public class Server {
         broadcast(broadcastMessage);
         displayMessage(broadcastMessage, clientThread);
         clientThreads.remove(clientThread);
-        jFrame.setTitle("SERVER ON: " + host + " - PORT: " + port + " - N CLIENTS: " + clientThreads.size());
+        setTitle();
     }
 
     /**
@@ -139,7 +145,8 @@ public class Server {
     }
 
     /**
-     * Main method that starts a new server on a user inputted port if present or a standard port
+     * Main method that starts a new server on a default or user inputted port
+     * If no user input is present the port number is 2000 by default
      *
      * @param args eventual port number
      */

@@ -4,9 +4,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * Thread that is listening for incoming messages from the chat client
+ * Thread that is listening for incoming messages from a chat client
  *
- * @author Jennifer McCarthy, jemc7787, 930124-0983
+ * @author Jennifer McCarthy
  */
 public class ClientThread extends Thread {
 
@@ -30,29 +30,11 @@ public class ClientThread extends Thread {
     /**
      * Listens for a message from the client via the server using stream sockets
      * If message is to 'All' it will be broadcasted, otherwise it will be sent to reciever client
-     * When a client is disconnected it is removed from the server and the thread are killed
+     * When a client is disconnected it is removed from the server
      */
     @Override
     public void run() {
-
-        /* Sends a list of online clients to a connected client and receives the clients username */
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            username = bufferedReader.readLine();
-
-            printWriter = new PrintWriter(socket.getOutputStream(), true);
-            String list = server.getOnlineClients(username);
-            printWriter.println(list);
-
-            String broadcastMessage = "CONNECTED CLIENT: [" + username + "]";
-            server.broadcast(broadcastMessage);
-            server.displayMessage(broadcastMessage, this);
-
-        } catch (Exception ex){
-            ex.printStackTrace();
-        }
-
-        /* Listens for messages */
+        setUpNewClient();
         alive = true;
         while (alive) {
             String msg;
@@ -69,18 +51,38 @@ public class ClientThread extends Thread {
                         server.displayMessage("public: " + msg, this);
                     } else {
                         String completeMsg = sender + " to " + receiver + message;
-                        server.sendPrivate(completeMsg, this, receiver);
+                        server.sendPrivateMessage(completeMsg, this, receiver);
                         server.displayMessage("private: " + msg, this);
                     }
                 }
                 printWriter.close();
                 bufferedReader.close();
                 socket.close();
-
             } catch (Exception e) {
                 server.removeClient(this);
             }
             server.killThread(this);
+        }
+    }
+
+    /**
+     *  Sets up a new client by retrieving the clients' username, prints online users and broadcasts that a new client is connected
+     */
+    public void setUpNewClient(){
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            username = bufferedReader.readLine();
+
+            printWriter = new PrintWriter(socket.getOutputStream(), true);
+            String onlineUsernames = server.getOnlineClientUsernames(username);
+            printWriter.println(onlineUsernames);
+
+            String broadcastMessage = "CONNECTED CLIENT: [" + username + "]";
+            server.broadcast(broadcastMessage);
+            server.displayMessage(broadcastMessage, this);
+
+        } catch (Exception ex){
+            ex.printStackTrace();
         }
     }
 
@@ -105,7 +107,7 @@ public class ClientThread extends Thread {
     /**
      * Sets the client thread to be running or not
      *
-     * @param bool
+     * @param bool alive or not alive
      */
     public void setAlive(boolean bool){
         alive = bool;
