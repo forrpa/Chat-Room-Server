@@ -1,3 +1,4 @@
+![Skärmbild (64)](https://user-images.githubusercontent.com/77730310/152993541-7be6fb20-5ab6-4ea4-8cd4-804ffd55b297.png)
 ﻿Chat-Room-Server
 
 A GUI chat room server that works with my Chat-Room-Client. Uses Swing.
